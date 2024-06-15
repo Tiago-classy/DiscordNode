@@ -5,7 +5,6 @@ import cron from 'node-cron';
 import fs from 'fs'
 // Import everything the commands/ninja.js file exports and store it inside the ninja variable.
 import * as int from './commands/ninja.js';
-
 // Call the config() function on dotenv to load the environmental variables from the .env file
 config();
 
