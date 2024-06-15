@@ -22,8 +22,8 @@ const client = new Client({
 });
 
 // The URL of the image you want to send
-const imageUrl = '/assets/welcome.png';
-const imageUrl2 = '/assets/daily.png';
+const imageUrl = './assets/welcome.png';
+const imageUrl2 = './assets/daily.png';
 
 
 // When the client is ready, run this code (only once)
@@ -61,7 +61,7 @@ async function sendDailyMessage() {
             if (member.user && !member.user.bot) {
                 try {
                     await member.send({
-                        content: fs.readFileSync('assets/daily.txt').toString(),
+                        content: fs.readFileSync('./assets/daily.txt').toString(),
                         files: [imageUrl2]
                     });
                     console.log(`Sent a daily message to ${member.user.tag}`);
@@ -86,7 +86,7 @@ client.on('guildMemberAdd', async member => {
     try {
         // Send a private message to the new member
         await member.send({
-            content: fs.readFileSync('assets/welcome.txt').toString(),
+            content: fs.readFileSync('./assets/welcome.txt').toString(),
             files: [imageUrl]
         });
         console.log(`Sent a welcome message to ${member.user.tag}`);
