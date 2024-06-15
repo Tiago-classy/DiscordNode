@@ -8,7 +8,6 @@ COPY package*.json ./
 
 # Install the required npm packages
 RUN npm install
-RUN  npm install discord.js, dotenv, node-cron
 
 # Copy the rest of the application code
 COPY . .
