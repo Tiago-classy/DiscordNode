@@ -2,7 +2,7 @@
 import { Client, Events, GatewayIntentBits } from 'discord.js';
 import { config } from 'dotenv';
 import cron from 'node-cron';
-import fs from 'fs'
+import fs from 'fs';
 // Import everything the commands/ninja.js file exports and store it inside the ninja variable.
 import * as int from './commands/ninja.js';
 // Call the config() function on dotenv to load the environmental variables from the .env file
@@ -20,17 +20,20 @@ const client = new Client({
     ]
 });
 
-// The URL of the image you want to send
-const imageUrl = './assets/welcome.png';
-const imageUrl2 = './assets/daily.png';
-
+// Mapping of server IDs to their respective asset directories
+const serverAssets = {
+    '1248274462965764229': './assets/Test/',
+    '956003357129076746': './assets/Flamengo/',
+    // 'SERVER_ID_2': './assets/MoveMind/',
+    // Add more server IDs and their respective directories as needed
+};
 
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
     console.log('Ready!');
 
     // Schedule a task to send a message every 24 hours
-    cron.schedule('0 * * * *', () => {
+    cron.schedule('0 0 * * *', () => { // Changed to run daily at midnight
         sendDailyMessage();
     });
 });
@@ -46,7 +49,7 @@ async function handleInteraction(interaction) {
     if (!interaction.isCommand()) return;
 
     // Command execution mapping
-    if (interaction.commandName === 'ninja') {
+    if (interaction.commandName === 'beClever') {
         await int.execute(interaction);
     }
 }
@@ -56,12 +59,17 @@ async function sendDailyMessage() {
     const guilds = client.guilds.cache.map(guild => guild);
     for (const guild of guilds) {
         const members = await guild.members.fetch();
+        const assetsPath = serverAssets[guild.id];
+        if (!assetsPath) {
+            console.log(`No assets configured for guild ${guild.id}`);
+            continue;
+        }
         for (const member of members.values()) { // Use .values() to iterate over the collection
             if (member.user && !member.user.bot) {
                 try {
                     await member.send({
-                        content: fs.readFileSync('./assets/daily.txt').toString(),
-                        files: [imageUrl2]
+                        content: fs.readFileSync(`${assetsPath}daily.txt`).toString(),
+                        files: [`${assetsPath}daily.png`]
                     });
                     console.log(`Sent a daily message to ${member.user.tag}`);
                 } catch (error) {
@@ -82,11 +90,16 @@ client.on(Events.InteractionCreate, handleInteraction);
 
 // Listen for new guild members
 client.on('guildMemberAdd', async member => {
+    const assetsPath = serverAssets[member.guild.id];
+    if (!assetsPath) {
+        console.log(`No assets configured for guild ${member.guild.id}`);
+        return;
+    }
     try {
         // Send a private message to the new member
         await member.send({
-            content: fs.readFileSync('./assets/welcome.txt').toString(),
-            files: [imageUrl]
+            content: fs.readFileSync(`${assetsPath}welcome.txt`).toString(),
+            files: [`${assetsPath}welcome.png`]
         });
         console.log(`Sent a welcome message to ${member.user.tag}`);
     } catch (error) {
