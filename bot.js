@@ -22,6 +22,7 @@ const client = new Client({
 
 // Mapping of server IDs to their respective asset directories
 const serverAssets = {
+    '1248265152902598657': './assets/Test/',
     '1248274462965764229': './assets/Test/',
     '956003357129076746': './assets/Flamengo/',
     // 'SERVER_ID_2': './assets/MoveMind/',
