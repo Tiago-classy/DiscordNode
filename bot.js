@@ -22,12 +22,15 @@ const client = new Client({
 
 // Mapping of server IDs to their respective asset directories
 const serverAssets = {
-    '1248265152902598657': './assets/Test/',
-    '1248274462965764229': './assets/Test/',
+    // '1248265152902598657': './assets/Test/',
+    // '1248274462965764229': './assets/Test/',
     '956003357129076746': './assets/Flamengo/',
-    '1252279103894065443': './assets/MoveMind/',
+    // '1252279103894065443': './assets/MoveMind/',
     // Add more server IDs and their respective directories as needed
 };
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// Function to generate a random number between min and max (inclusive)
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
@@ -65,11 +68,12 @@ async function sendDailyMessage() {
             console.log(`No assets configured for guild ${guild.id}`);
             continue;
         }
+        let count = 0;
         for (const member of members.values()) { // Use .values() to iterate over the collection
             if (member.user && !member.user.bot) {
                 try {
                     await member.send({
-                        content: fs.readFileSync(`${assetsPath}daily.txt`).toString(),
+                        content: `Hello ${member.user.username},\n${fs.readFileSync(`${assetsPath}daily.txt`).toString()}`,
                         files: [`${assetsPath}daily.png`]
                     });
                     console.log(`Sent a daily message to ${member.user.tag}`);
@@ -78,7 +82,8 @@ async function sendDailyMessage() {
                 }
                 count++;
                 if (count % 10 === 0) {
-                    await sleep(3000); // Add a 2-second delay after every 10 members
+                    const randomSleepTime = getRandomInt(5000, 10000);
+                    await sleep(randomSleepTime); // Add a random delay between 5 to 10 seconds after every 10 members
                 }
             } else {
                 console.log('Skipped an invalid member:', member);
