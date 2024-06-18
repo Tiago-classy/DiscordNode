@@ -76,6 +76,10 @@ async function sendDailyMessage() {
                 } catch (error) {
                     console.error(`Could not send a message to ${member.user.tag}.`, error);
                 }
+                count++;
+                if (count % 10 === 0) {
+                    await sleep(3000); // Add a 2-second delay after every 10 members
+                }
             } else {
                 console.log('Skipped an invalid member:', member);
             }
