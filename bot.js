@@ -34,7 +34,7 @@ client.once('ready', () => {
     console.log('Ready!');
 
     // Schedule a task to send a message every 24 hours
-    cron.schedule('0 13 * * *', () => { // Changed to run daily at midnight
+    cron.schedule('7 13 * * *', () => { // Changed to run daily at 13.07
         sendDailyMessage();
     });
 });
