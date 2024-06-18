@@ -32,7 +32,7 @@ const serverAssets = {
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
     console.log('Ready!');
-
+    sendDailyMessage();
     // Schedule a task to send a message every 24 hours
     cron.schedule('0 13 * * *', () => { // Changed to run daily at 13.07
         sendDailyMessage();
