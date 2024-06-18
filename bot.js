@@ -25,7 +25,7 @@ const serverAssets = {
     '1248265152902598657': './assets/Test/',
     '1248274462965764229': './assets/Test/',
     '956003357129076746': './assets/Flamengo/',
-    // 'SERVER_ID_2': './assets/MoveMind/',
+    '1252279103894065443': './assets/MoveMind/',
     // Add more server IDs and their respective directories as needed
 };
 
