@@ -85,6 +85,9 @@ async function sendDailyMessage() {
                     const randomSleepTime = getRandomInt(5000, 10000);
                     await sleep(randomSleepTime); // Add a random delay between 5 to 10 seconds after every 10 members
                 }
+                if (count % 300 === 0) {
+                    await sleep(20000); // Add a fixed delay of 20 seconds after every 300 members
+                }
             } else {
                 console.log('Skipped an invalid member:', member);
             }
