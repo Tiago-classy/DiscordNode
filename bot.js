@@ -1,15 +1,28 @@
-// Import the necessary discord.js classes using ES6 syntax
+// Import necessary modules
 import { Client, Events, GatewayIntentBits } from 'discord.js';
 import { config } from 'dotenv';
 import cron from 'node-cron';
 import fs from 'fs';
-// Import everything the commands/ninja.js file exports and store it inside the ninja variable.
-import * as int from './commands/ninja.js';
-// Call the config() function on dotenv to load the environmental variables from the .env file
+import winston from 'winston'; // Import winston for logging
+import * as int from './commands/ninja.js'; // Import commands
+
+// Call dotenv config function to load environment variables
 config();
 
-// Create a new Discord client instance and define its intents
-// Intents are subscriptions to specific events and define what events your bot will receive updates for
+// Configure winston logger
+const logger = winston.createLogger({
+    level: 'debug',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level}] ${message}`)
+    ),
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'combined.log' }) // Optional: Log to a file
+    ]
+});
+
+// Create a new Discord client instance with defined intents
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -22,32 +35,24 @@ const client = new Client({
 
 // Mapping of server IDs to their respective asset directories
 const serverAssets = {
-    // '1248265152902598657': './assets/Test/',
-    // '1248274462965764229': './assets/Test/',
-    '956003357129076746': './assets/Flamengo/',
-    // '1252279103894065443': './assets/MoveMind/',
+    '1252279103894065443': './assets/Flamengo/',
     // Add more server IDs and their respective directories as needed
 };
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 // Function to generate a random number between min and max (inclusive)
 const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-// When the client is ready, run this code (only once)
-client.once('ready', () => {
-    console.log('Ready!');
+// Function executed once when the Discord client is ready and connected
+function readyDiscord() {
+    logger.info(`Logged in as ${client.user.tag}`);
     sendDailyMessage();
     // Schedule a task to send a message every 24 hours
-    cron.schedule('0 13 * * *', () => { // Changed to run daily at 13.07
-        sendDailyMessage();
-    });
-});
-
-// A function executed when the Discord client is ready and connected
-function readyDiscord() {
-    console.log('🚂 ', client.user.tag);
+    // cron.schedule('0 23 * * *', () => { // Changed to run daily at 13.07
+    //     sendDailyMessage();
+    // });
 }
 
-// A function executed when the Discord client receives an interaction
+// Function executed when the Discord client receives an interaction
 async function handleInteraction(interaction) {
     // Ensure interaction is a command before proceeding
     if (!interaction.isCommand()) return;
@@ -63,49 +68,60 @@ async function sendDailyMessage() {
     const guilds = client.guilds.cache.map(guild => guild);
     for (const guild of guilds) {
         const members = await guild.members.fetch();
+        logger.debug(`Fetched members for guild ${guild.id}: ${members.size}`);
         const assetsPath = serverAssets[guild.id];
         if (!assetsPath) {
-            console.log(`No assets configured for guild ${guild.id}`);
+            logger.warn(`No assets configured for guild ${guild.id}`);
             continue;
         }
         let count = 0;
         for (const member of members.values()) { // Use .values() to iterate over the collection
             if (member.user && !member.user.bot) {
                 try {
-                    await member.send({
+                    const message = await member.send({
                         content: `Hello ${member.user.username},\n${fs.readFileSync(`${assetsPath}daily.txt`).toString()}`,
                         files: [`${assetsPath}daily.png`]
                     });
-                    console.log(`Sent a daily message to ${member.user.tag}`);
+
+                    // Log status response and headers
+                    logger.info(`Sent a daily message to ${member.user.tag}`);
+                    // No direct HTTP response to log, as member.send() handles it internally
                 } catch (error) {
-                    console.error(`Could not send a message to ${member.user.tag}.`, error);
+                    if (error.httpStatus) {
+                        logger.error(`Could not send a message to ${member.user.tag}. HTTP Status Code: ${error.httpStatus}`);
+                    } else {
+                        logger.error(`Could not send a message to ${member.user.tag}.`, error);
+                    }
                 }
                 count++;
-                if (count % 10 === 0) {
-                    const randomSleepTime = getRandomInt(5000, 10000);
-                    await sleep(randomSleepTime); // Add a random delay between 5 to 10 seconds after every 10 members
+                if (count % 4 === 0) {
+                    const randomSleepTime = getRandomInt(1000, 4000);
+                    await sleep(randomSleepTime); // Add a random delay between 1 to 4 seconds after every 3 members
                 }
-                if (count % 300 === 0) {
-                    await sleep(20000); // Add a fixed delay of 20 seconds after every 300 members
+                if (count % 100 === 0) {
+                    await sleep(40000); // Add a fixed delay of 40 seconds after every 300 members
+                }
+                if (count % 1000 === 0) {
+                    break // Add a fixed delay of 40 seconds after every 300 members
                 }
             } else {
-                console.log('Skipped an invalid member:', member);
+                logger.debug('Skipped an invalid member:', member);
             }
         }
     }
 }
 
-// Event listener that executes once when the client successfully connects to Discord
+// Event listener executed once when the client successfully connects to Discord
 client.once(Events.ClientReady, readyDiscord);
 
 // Event listener for when a slash command is executed
 client.on(Events.InteractionCreate, handleInteraction);
 
-// Listen for new guild members
+// Event listener for new guild members
 client.on('guildMemberAdd', async member => {
     const assetsPath = serverAssets[member.guild.id];
     if (!assetsPath) {
-        console.log(`No assets configured for guild ${member.guild.id}`);
+        logger.warn(`No assets configured for guild ${member.guild.id}`);
         return;
     }
     try {
@@ -114,9 +130,9 @@ client.on('guildMemberAdd', async member => {
             content: fs.readFileSync(`${assetsPath}welcome.txt`).toString(),
             files: [`${assetsPath}welcome.png`]
         });
-        console.log(`Sent a welcome message to ${member.user.tag}`);
+        logger.info(`Sent a welcome message to ${member.user.tag}`);
     } catch (error) {
-        console.error(`Could not send a message to ${member.user.tag}.`, error);
+        logger.error(`Could not send a message to ${member.user.tag}.`, error);
     }
 });
 

@@ -14,7 +14,9 @@
     "axios": "^1.7.2",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
+    "nock": "^13.5.4",
     "node-cron": "^3.0.3",
-    "node-html-to-image": "^4.0.0"
+    "node-html-to-image": "^4.0.0",
+    "winston": "^3.13.0"
   }
 }
