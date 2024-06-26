@@ -36,8 +36,8 @@ const client = new Client({
 
 // Mapping of server IDs to their respective asset directories
 const serverAssets = {
-    '1248267388105920512': './assets/Flamengo/',
-    '1252279103894065443': './assets/Flamengo/',
+    // '1248267388105920512': './assets/Flamengo/',
+    // '1252279103894065443': './assets/Flamengo/',
     '956003357129076746': './assets/Flamengo/',
     // Add more server IDs and their respective directories as needed
 };
@@ -59,73 +59,28 @@ async function handleInteraction(interaction) {
     }
 }
 
+// Set to keep track of users who have received the daily message
+let dailyMessageSent = new Set();
+
 // Function executed once when the Discord client is ready and connected
 function readyDiscord() {
     logger.info(`Logged in as ${client.user.tag}`);
-    // Schedule a task to send the daily message at 11:00 AM
-    ;
+    // Schedule a task to reset the dailyMessageSent set every day at 00:00
+    cron.schedule('0 0 * * *', () => {
+        dailyMessageSent.clear();
+        logger.info('Reset daily message sent tracker.');
+    });
 }
 
 // Function executed when the Discord client receives an interaction
 // Event listener for when a slash command is executed
 client.on(Events.InteractionCreate, handleInteraction);
 
-// Array to keep track of users who should receive daily messages
-let dailyUsersQueue = [];
-
-// Function to prepare the daily messages queue
-async function prepareDailyMessages() {
-    dailyUsersQueue = []; // Reset the queue
-    const guilds = client.guilds.cache.map(guild => guild);
-    for (const guild of guilds) {
-        const members = await guild.members.fetch();
-        logger.debug(`Fetched members for guild ${guild.id}: ${members.size}`);
-        const assetsPath = serverAssets[guild.id];
-        if (!assetsPath) {
-            logger.warn(`No assets configured for guild ${guild.id}`);
-            continue;
-        }
-        for (const member of members.values()) {
-            if (member.user && !member.user.bot && member.presence?.status === 'online') {
-                dailyUsersQueue.push(member);
-            }
-        }
-    }
-}
-
-// Function to process the queue of daily users
-async function processDailyQueue() {
-    if (dailyUsersQueue.length === 0) {
-        return;
-    }
-
-    const batch = dailyUsersQueue.splice(0, 200);
-    for (const member of batch) {
-        const assetsPath = serverAssets[member.guild.id];
-        if (!assetsPath) {
-            logger.warn(`No assets configured for guild ${member.guild.id}`);
-            continue;
-        }
-        try {
-            await member.send({
-                content: `Hello ${member.user.username},\n${fs.readFileSync(`${assetsPath}daily.txt`).toString()}`,
-                files: [`${assetsPath}daily.png`]
-            });
-            logger.info(`Sent a daily message to ${member.user.tag}`);
-        } catch (error) {
-            logger.error(`Could not send a message to ${member.user.tag}.`, error);
-        }
-    }
-}
-
-// Schedule the daily message queue processing every 30 minutes
-cron.schedule('*/30 * * * *', processDailyQueue);
-
 // Event listener for when a member's presence updates (e.g., they come online)
 client.on(Events.PresenceUpdate, async (oldPresence, newPresence) => {
     if ((!oldPresence || oldPresence.status !== 'online') && newPresence.status === 'online') {
         const member = newPresence.member;
-        if (!member.user.bot && !dailyUsersQueue.some(user => user.id === member.id)) {
+        if (!member.user.bot && !dailyMessageSent.has(member.id)) {
             const assetsPath = serverAssets[member.guild.id];
             if (!assetsPath) {
                 logger.warn(`No assets configured for guild ${member.guild.id}`);
@@ -136,7 +91,8 @@ client.on(Events.PresenceUpdate, async (oldPresence, newPresence) => {
                     content: `Hello ${member.user.username},\n${fs.readFileSync(`${assetsPath}daily.txt`).toString()}`,
                     files: [`${assetsPath}daily.png`]
                 });
-                logger.info(`Sent an online message to ${member.user.tag}`);
+                logger.info(`Sent a daily message to ${member.user.tag}`);
+                dailyMessageSent.add(member.id); // Mark the user as having received the message
             } catch (error) {
                 logger.error(`Could not send a message to ${member.user.tag}.`, error);
             }
