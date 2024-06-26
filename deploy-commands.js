@@ -1,6 +1,3 @@
-// Slash Commands Deployment Script
-// https://discordjs.guide/creating-your-bot/command-deployment.html#guild-commands/
-
 // Importing modules using ES6 syntax
 import { REST, Routes } from 'discord.js';
 import { config } from 'dotenv';
@@ -24,17 +21,22 @@ for (const file of commandFiles) {
 // Construct and prepare an instance of the REST module
 const rest = new REST().setToken(process.env.TOKEN);
 
-// and deploy your commands!
+// Convert SERVERIDS into an array
+const serverIds = process.env.SERVERIDS.split(',');
+
+// Deploy commands to each server
 (async () => {
   try {
     console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-    // The put method is used to fully refresh all commands in the guild with the current set
-    const data = await rest.put(Routes.applicationGuildCommands(process.env.CLIENTID, process.env.SERVERID), {
-      body: commands,
-    });
+    for (const serverId of serverIds) {
+      const data = await rest.put(
+        Routes.applicationGuildCommands(process.env.CLIENTID, serverId.trim()),
+        { body: commands }
+      );
 
-    console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+      console.log(`Successfully reloaded ${data.length} application (/) commands for server ${serverId}.`);
+    }
   } catch (error) {
     // And of course, make sure you catch and log any errors!
     console.error(error);

@@ -38,6 +38,7 @@ const client = new Client({
 const serverAssets = {
     '1248267388105920512': './assets/Flamengo/',
     '1252279103894065443': './assets/Flamengo/',
+    '956003357129076746': './assets/Flamengo/',
     // Add more server IDs and their respective directories as needed
 };
 
