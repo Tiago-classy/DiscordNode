@@ -8,5 +8,6 @@ export const data = new SlashCommandBuilder()
 
 // Execute function export
 export async function execute(interaction) {
-  await interaction.reply("");
+    console.log('Ninja touched a tua prima')
+  await interaction.reply("It's done boss!");
 }
