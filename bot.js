@@ -63,9 +63,7 @@ async function handleInteraction(interaction) {
 function readyDiscord() {
     logger.info(`Logged in as ${client.user.tag}`);
     // Schedule a task to send the daily message at 11:00 AM
-    cron.schedule('0 11 * * *', () => {
-        prepareDailyMessages();
-    });
+    ;
 }
 
 // Function executed when the Discord client receives an interaction
